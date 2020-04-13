@@ -42,7 +42,7 @@ class Lox() {
         hadError = true;                                                  
     }
 }
-
+/*
 fun main(args: Array<String>) {
     if (args.size > 1) {                                   
         println("Usage: klox [script]");          
@@ -52,4 +52,18 @@ fun main(args: Array<String>) {
     } else {                                                 
         Lox().runPrompt();                                           
     }                                                        
+}
+*/
+
+// test ast printer
+fun main(args: Array<String>) {
+    val expression = Binary(                     
+        Unary(                                    
+            Token(TokenType.MINUS, "-", null, 1),      
+            Literal(123)),                        
+        Token(TokenType.STAR, "*", null, 1),           
+        Grouping(                                 
+            Literal(45.67)));
+
+    println(AstPrinter().print(expression));
 }
