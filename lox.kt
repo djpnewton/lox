@@ -5,11 +5,19 @@ import java.nio.file.Paths;
 import java.nio.charset.Charset;
 
 class Lox() {
-    var hadError: Boolean = false;
+    val interpreter = Interpreter(this);
+    var hadError = false;
+    var hadRuntimeError = false;
 
     fun runFile(path: String) {
         val bytes = Files.readAllBytes(Paths.get(path));
-        run(String(bytes, Charset.defaultCharset()));          
+        run(String(bytes, Charset.defaultCharset()));
+        
+        // Indicate an error in the exit code.           
+        if (hadError)
+            System.exit(65);
+        if (hadRuntimeError)
+            System.exit(70);
     }
     
     fun runPrompt() {         
@@ -23,14 +31,14 @@ class Lox() {
     fun run(source: String) {
         val scanner = Scanner(this, source);
         val tokens = scanner.scanTokens();
-    
-        // For now, just print the tokens.
-        for (token in tokens) {
-          println(token);
-        }
+        val parser = Parser(this, tokens);                    
+        val expression = parser.parse();
 
-        // Indicate an error in the exit code.           
-        if (hadError) System.exit(65);
+        // Stop if there was a syntax error.                   
+        if (hadError || expression == null)
+            return;                                  
+
+        interpreter.interpret(expression);
     }
     
     fun error(line: Int, message: String) {                       
@@ -41,8 +49,22 @@ class Lox() {
         System.err.println("[line " + line + "] Error" + where + ": " + message);        
         hadError = true;                                                  
     }
+
+    fun error(token: Token, message: String) {              
+        if (token.type == TokenType.EOF) {                          
+          report(token.line, " at end", message);                   
+        } else {                                                    
+          report(token.line, " at '" + token.lexeme + "'", message);
+        }                                                           
+    }
+
+    fun runtimeError(error: RuntimeError) {
+        System.err.println(error.message +     
+            "\n[line " + error.token.line + "]");   
+        hadRuntimeError = true;                     
+      }
 }
-/*
+
 fun main(args: Array<String>) {
     if (args.size > 1) {                                   
         println("Usage: klox [script]");          
@@ -52,18 +74,4 @@ fun main(args: Array<String>) {
     } else {                                                 
         Lox().runPrompt();                                           
     }                                                        
-}
-*/
-
-// test ast printer
-fun main(args: Array<String>) {
-    val expression = Binary(                     
-        Unary(                                    
-            Token(TokenType.MINUS, "-", null, 1),      
-            Literal(123)),                        
-        Token(TokenType.STAR, "*", null, 1),           
-        Grouping(                                 
-            Literal(45.67)));
-
-    println(AstPrinter().print(expression));
 }
