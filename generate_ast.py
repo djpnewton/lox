@@ -14,7 +14,7 @@ def define_type(f, base_name, class_name, field_list):
     fields = field_list.split(', ')
     field_list_kotlin = ', '.join(kotlin_field_from_java(field) for field in fields)
     fields_kotlin = field_list_kotlin.split(', ')
-    f.write('class ' + class_name + '(' + field_list_kotlin + ') : ' + base_name + '() {\n')
+    f.write('class ' + base_name + class_name + '(' + field_list_kotlin + ') : ' + base_name + '() {\n')
 
     # Fields.                                           
     for field in fields_kotlin:
@@ -23,18 +23,18 @@ def define_type(f, base_name, class_name, field_list):
 
     # Visitor pattern.                                      
     f.write('\n')
-    f.write('    override fun <R> accept(visitor: Visitor<R>): R {\n')
+    f.write('    override fun <R> accept(visitor: ' + base_name + 'Visitor<R>): R {\n')
     f.write('      return visitor.visit' + class_name + base_name + '(this);\n')
     f.write('    }\n')
 
     f.write('}\n')
 
 def define_visitor(f, base_name, types):
-    f.write('interface Visitor<R> {\n') # out R?
+    f.write('interface ' + base_name + 'Visitor<R> {\n') # out R?
 
     for t in types:
         type_name = t.split(':')[0].strip()
-        f.write('    fun visit' + type_name + base_name + '(' + base_name.lower() + ': ' + type_name + '): R\n')
+        f.write('    fun visit' + type_name + base_name + '(' + base_name.lower() + ': ' + base_name + type_name + '): R\n')
 
     f.write('}\n')
 
@@ -50,7 +50,7 @@ def define_ast(out_dir, base_name, types):
         f.write('abstract class ' + base_name + ' {\n')
 
         # The base accept() method.
-        f.write('   abstract fun <R> accept(visitor: Visitor<R>): R;\n')
+        f.write('   abstract fun <R> accept(visitor: ' + base_name + 'Visitor<R>): R;\n')
 
         f.write('}\n')
         f.write('\n')
@@ -68,9 +68,17 @@ if __name__ == '__main__':
         sys.exit(1)
 
     out_dir = sys.argv[1]
-    define_ast(out_dir, 'Expr', [          
+    define_ast(out_dir, 'Expr', [
+        'Assign   : Token name, Expr value',
         'Binary   : Expr left, Token operator, Expr right',
         'Grouping : Expr expression',                      
         'Literal  : Object value',                         
-        'Unary    : Token operator, Expr right'            
+        'Unary    : Token operator, Expr right',
+        'Variable : Token name'
+    ])
+    define_ast(out_dir, 'Stmt', [
+        'Block      : List<Stmt> statements',
+        'Expression : Expr expression',
+        'Print      : Expr expression',
+        'Var        : Token name, Expr? initializer'
     ])

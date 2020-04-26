@@ -1,48 +1,67 @@
 package klox.lox;
 
-interface Visitor<R> {
-    fun visitBinaryExpr(expr: Binary): R
-    fun visitGroupingExpr(expr: Grouping): R
-    fun visitLiteralExpr(expr: Literal): R
-    fun visitUnaryExpr(expr: Unary): R
+interface ExprVisitor<R> {
+    fun visitAssignExpr(expr: ExprAssign): R
+    fun visitBinaryExpr(expr: ExprBinary): R
+    fun visitGroupingExpr(expr: ExprGrouping): R
+    fun visitLiteralExpr(expr: ExprLiteral): R
+    fun visitUnaryExpr(expr: ExprUnary): R
+    fun visitVariableExpr(expr: ExprVariable): R
 }
 
 abstract class Expr {
-   abstract fun <R> accept(visitor: Visitor<R>): R;
+   abstract fun <R> accept(visitor: ExprVisitor<R>): R;
 }
 
-class Binary(left: Expr, operator: Token, right: Expr) : Expr() {
+class ExprAssign(name: Token, value: Expr) : Expr() {
+    val name = name;
+    val value = value;
+
+    override fun <R> accept(visitor: ExprVisitor<R>): R {
+      return visitor.visitAssignExpr(this);
+    }
+}
+
+class ExprBinary(left: Expr, operator: Token, right: Expr) : Expr() {
     val left = left;
     val operator = operator;
     val right = right;
 
-    override fun <R> accept(visitor: Visitor<R>): R {
+    override fun <R> accept(visitor: ExprVisitor<R>): R {
       return visitor.visitBinaryExpr(this);
     }
 }
 
-class Grouping(expression: Expr) : Expr() {
+class ExprGrouping(expression: Expr) : Expr() {
     val expression = expression;
 
-    override fun <R> accept(visitor: Visitor<R>): R {
+    override fun <R> accept(visitor: ExprVisitor<R>): R {
       return visitor.visitGroupingExpr(this);
     }
 }
 
-class Literal(value: Any?) : Expr() {
+class ExprLiteral(value: Any?) : Expr() {
     val value = value;
 
-    override fun <R> accept(visitor: Visitor<R>): R {
+    override fun <R> accept(visitor: ExprVisitor<R>): R {
       return visitor.visitLiteralExpr(this);
     }
 }
 
-class Unary(operator: Token, right: Expr) : Expr() {
+class ExprUnary(operator: Token, right: Expr) : Expr() {
     val operator = operator;
     val right = right;
 
-    override fun <R> accept(visitor: Visitor<R>): R {
+    override fun <R> accept(visitor: ExprVisitor<R>): R {
       return visitor.visitUnaryExpr(this);
+    }
+}
+
+class ExprVariable(name: Token) : Expr() {
+    val name = name;
+
+    override fun <R> accept(visitor: ExprVisitor<R>): R {
+      return visitor.visitVariableExpr(this);
     }
 }
 
